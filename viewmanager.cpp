@@ -95,6 +95,13 @@ void CViewManager::activeNext(const GreatWindow *pWnd)
 
 }
 
+void CViewManager::updateRecent()
+{
+    for(auto ix = m_vWindows.begin(); ix != m_vWindows.end(); ix++) {
+        (*ix)->updateRecent();
+    }
+}
+
 void CViewManager::present(const QString& url)
 {
     if(url.isEmpty()) {

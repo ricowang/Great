@@ -14,6 +14,7 @@ public:
     void setImage(const QImage& img);
     void setImageActSize(const QSize& sz);
     void offset(int x, int y, bool repaint = false);
+    void zoom(bool in);
 
 protected:
     QImage    m_image;

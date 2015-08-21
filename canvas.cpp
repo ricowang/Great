@@ -83,3 +83,8 @@ void CCanvas::offset(int x, int y, bool rp)
     }
 }
 
+void CCanvas::zoom(bool in)
+{
+
+}
+

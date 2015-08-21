@@ -20,7 +20,7 @@ public:
     void quit();
     void quitOne(const GreatWindow* pWnd);
     void activeNext(const GreatWindow* pWnd);
-
+    void updateRecent();
 
     void present(const QString& url);
     GreatWindow *findWindow(QSize psz);

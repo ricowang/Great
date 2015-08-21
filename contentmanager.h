@@ -15,6 +15,11 @@ class CContentManager
     void close();
     bool favorite(const QString& url);
     QString getUrl(int offset = 0, bool move = false, bool group = false);
+    bool openFile(const QString& path);
+    void addRecentFiles(const QString& path);
+    void loadRecentFiles();
+
+    QString getRecent(int idx);
 
 public:
     static CContentManager* getInstance();
@@ -22,6 +27,7 @@ public:
 protected:
     std::vector<QString>    m_vUrls;
     int                     m_nCurrent;
+    std::vector<QString>    m_recent;
 
  private:
     static CContentManager* s_poInstance;

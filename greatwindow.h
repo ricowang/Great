@@ -24,9 +24,11 @@ public:
     void display(const QImage& img);
     void setLoader(std::shared_ptr<CDecoder> decoder);
     void setImageActSize(const QSize& sz);
+    void updateRecent();
 
 public slots:
     void loaderProgress(CDecoder* loader, DecoderStatus status);
+    void openRecentFile();
 
 protected:
     void keyPressEvent(QKeyEvent * event);
@@ -38,6 +40,7 @@ protected:
     bool m_jumping;
     QString m_mainUrl;
     QByteArray m_geoData;
+    QAction* m_recentFileActions[5];
 
 private slots:
     void on_action_Quit_triggered();
@@ -49,6 +52,7 @@ private:
     bool            m_bMainWindow;
     QPixmap         m_pixmap;
     CCanvas*        m_canvas;
+
 
     std::shared_ptr<CDecoder> m_decoder;
     std::vector<std::shared_ptr<CDecoder>> m_lasts;

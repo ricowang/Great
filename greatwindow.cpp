@@ -6,6 +6,7 @@
 #include "downloadmanager.h"
 #include "canvas.h"
 #include <QDesktopWidget>
+#include <contentmanager.h>
 
 GreatWindow::GreatWindow(int monitor, bool main, QWidget *parent) :
     QMainWindow(parent), m_monitor(monitor),
@@ -15,8 +16,22 @@ GreatWindow::GreatWindow(int monitor, bool main, QWidget *parent) :
     if(!main) {
         ui->menuBar->hide();
         ui->statusBar->hide();
+    } else {
+        m_recentFileActions[0] = ui->actionFile1;
+        m_recentFileActions[1] = ui->actionFile2;
+        m_recentFileActions[2] = ui->actionFile3;
+        m_recentFileActions[3] = ui->actionFile4;
+        m_recentFileActions[4] = ui->actionFile5;
+
+        for(int i=0; i<5; i++){
+            connect(m_recentFileActions[0], SIGNAL(triggered()),
+                    this, SLOT(openRecentFile()));
+        }
+
+        ContentMgr.loadRecentFiles();
     }
     ui->mainToolBar->hide();
+    updateRecent();
 
     m_canvas = new CCanvas(ui->center);
     this->setCentralWidget(m_canvas);
@@ -60,6 +75,26 @@ void GreatWindow::setLoader(std::shared_ptr<CDecoder> decoder)
 void GreatWindow::setImageActSize(const QSize &sz)
 {
     m_canvas->setImageActSize(sz);
+}
+
+void GreatWindow::updateRecent()
+{
+    if(!m_bMainWindow) {
+        return;
+    }
+
+    for(int i=0; i<5; i++) {
+        QString path = ContentMgr.getRecent(i);
+        if(path.isEmpty()) {
+            m_recentFileActions[i]->setVisible(false);
+        } else {
+            m_recentFileActions[i]->setData(path);
+
+            int idx = path.lastIndexOf("/")+1;
+            m_recentFileActions[i]->setText(path.mid(idx));
+            m_recentFileActions[i]->setVisible(true);
+        }
+    }
 }
 
 #define PressedAny(k) (QString(k).indexOf(char(key)) != -1)
@@ -128,6 +163,10 @@ void GreatWindow::keyPressEvent(QKeyEvent *event)
     if(PressedAny("dD")) {
         ViewMgr.setDuplicate();
     }
+
+    if(PressedAny("+-")) {
+        m_canvas->zoom(key=='+'?true:false);
+    }
 }
 
 void GreatWindow::reverFullScreen()
@@ -180,6 +219,15 @@ void GreatWindow::loaderProgress(CDecoder *loader, DecoderStatus status)
 {
     if(DS_Finished == status && m_decoder.get() == loader) {
         display(loader->image());
+    }
+}
+
+void GreatWindow::openRecentFile()
+{
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action) {
+        QString file = action->data().toString();
+        ContentMgr.openFile(file);
     }
 }
 

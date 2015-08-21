@@ -3,6 +3,9 @@
 #include <QFileInfo>
 #include <QTextStream>
 #include <algorithm>
+#include "viewmanager.h"
+#include <QSettings>
+
 #define tr(x) (x)
 
 CContentManager* CContentManager::s_poInstance = nullptr;
@@ -38,8 +41,12 @@ bool CContentManager::open(QWidget* parent)
     }
 
     QString fileName =  dialog.selectedFiles().first();
+    return openFile(fileName);
+}
 
-    QFileInfo fi(fileName);
+bool CContentManager::openFile(const QString& path)
+{
+    QFileInfo fi(path);
 
     if(!fi.exists() || !fi.isFile()) {
         return false;
@@ -47,7 +54,7 @@ bool CContentManager::open(QWidget* parent)
 
     close();
 
-    QFile inputFile(fileName);
+    QFile inputFile(path);
     if (!inputFile.open(QIODevice::ReadOnly)) {
         return false;
     }
@@ -62,7 +69,50 @@ bool CContentManager::open(QWidget* parent)
     std::sort(m_vUrls.begin(), m_vUrls.end());
     m_nCurrent = 0;
 
+    addRecentFiles(path);
+
     return true;
+}
+
+void CContentManager::addRecentFiles(const QString& path)
+{
+    auto it = std::remove(m_recent.begin(), m_recent.end(), path);
+    m_recent.erase(it, m_recent.end());
+    m_recent.push_back(path);
+
+    it = std::remove_if(m_recent.begin(), m_recent.end(), [](QString p){
+        QFileInfo fi(p);
+        return !fi.exists() || !fi.isFile();
+    });
+    m_recent.erase(it, m_recent.end());
+
+    QStringList rfiles;
+    for(auto it = m_recent.begin(); it != m_recent.end(); it++) {
+        rfiles.append(*it);
+    }
+    QSettings rf("Great", "Great");
+    rf.setValue("recen_files", rfiles);
+
+    ViewMgr.updateRecent();
+}
+
+void CContentManager::loadRecentFiles()
+{
+    m_recent.clear();
+    QSettings rf("Great", "Great");
+    QStringList rfiles = rf.value("recen_files").toStringList();
+    for(int i=0; i<rfiles.size(); i++){
+        m_recent.push_back(rfiles.at(i));
+    }
+}
+
+QString CContentManager::getRecent(int idx)
+{
+    if(idx >= m_recent.size()) {
+        return "";
+    }
+
+    return m_recent[idx];
 }
 
 void CContentManager::close()
@@ -73,7 +123,7 @@ void CContentManager::close()
 
 bool CContentManager::favorite(const QString &url)
 {
-    QFile outfile("./gf.plx");
+    QFile outfile("~/gf.plx");
     if (!outfile.open(QIODevice::Append)) {
         return false;
     }
