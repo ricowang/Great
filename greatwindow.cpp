@@ -24,7 +24,7 @@ GreatWindow::GreatWindow(int monitor, bool main, QWidget *parent) :
         m_recentFileActions[4] = ui->actionFile5;
 
         for(int i=0; i<5; i++){
-            connect(m_recentFileActions[0], SIGNAL(triggered()),
+            connect(m_recentFileActions[i], SIGNAL(triggered()),
                     this, SLOT(openRecentFile()));
         }
 

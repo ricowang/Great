@@ -78,7 +78,7 @@ void CContentManager::addRecentFiles(const QString& path)
 {
     auto it = std::remove(m_recent.begin(), m_recent.end(), path);
     m_recent.erase(it, m_recent.end());
-    m_recent.push_back(path);
+    m_recent.insert(m_recent.begin(), path);
 
     it = std::remove_if(m_recent.begin(), m_recent.end(), [](QString p){
         QFileInfo fi(p);
