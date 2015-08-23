@@ -71,6 +71,34 @@ DecoderStatus CDecoder::status()
     return m_status;
 }
 
+QString CDecoder::statusText()
+{
+    auto st = status();
+    switch(st) {
+    case DS_NotStarted:
+        return "No started";
+    break;
+    case DS_Started:
+        return "Started";
+    break;
+    case DS_HasHeader:
+        return "Started";
+    break;
+    case DS_Decoding:
+        return "Decoding";
+    break;
+    case DS_Finished:
+        return "Ready";
+    break;
+    case DS_Aborted:
+        return "Aborted";
+    break;
+    default:
+        return "";
+    break;
+    }
+}
+
 bool CDecoder::SetStatus(DecoderStatus code)
 {
     m_status = code;

@@ -7,6 +7,7 @@
 #include "canvas.h"
 #include <QDesktopWidget>
 #include <contentmanager.h>
+#include <QLabel>
 
 GreatWindow::GreatWindow(int monitor, bool main, QWidget *parent) :
     QMainWindow(parent), m_monitor(monitor),
@@ -15,7 +16,6 @@ GreatWindow::GreatWindow(int monitor, bool main, QWidget *parent) :
     ui->setupUi(this);
     if(!main) {
         ui->menuBar->hide();
-        ui->statusBar->hide();
     } else {
         m_recentFileActions[0] = ui->actionFile1;
         m_recentFileActions[1] = ui->actionFile2;
@@ -30,6 +30,26 @@ GreatWindow::GreatWindow(int monitor, bool main, QWidget *parent) :
 
         ContentMgr.loadRecentFiles();
     }
+
+    QLabel* urlLabel = new QLabel("");
+    urlLabel->setAlignment(Qt::AlignRight);
+    urlLabel->setMinimumWidth(400);
+
+    QLabel* statusLabel = new QLabel("");
+    statusLabel->setAlignment(Qt::AlignLeft);
+    statusLabel->setMinimumWidth(100);
+
+    QLabel* resolutionLabel = new QLabel("");
+    resolutionLabel->setAlignment(Qt::AlignLeft);
+    resolutionLabel->setMinimumWidth(150);
+
+    statusBar()->addWidget(statusLabel);
+    statusBar()->addWidget(resolutionLabel);
+    statusBar()->addWidget(urlLabel, 1);
+    m_statusLabels[0] = statusLabel;
+    m_statusLabels[1] = resolutionLabel;
+    m_statusLabels[2] = urlLabel;
+
     ui->mainToolBar->hide();
     updateRecent();
 
@@ -69,7 +89,9 @@ void GreatWindow::setLoader(std::shared_ptr<CDecoder> decoder)
     m_decoder = decoder;
     connect(decoder.get(), &CDecoder::statusChange,
             this, &GreatWindow::loaderProgress);
-
+    setStatus(2, m_decoder->url());
+    setStatus(1, "");
+    setStatus(0, m_decoder->statusText());
 }
 
 void GreatWindow::setImageActSize(const QSize &sz)
@@ -95,6 +117,15 @@ void GreatWindow::updateRecent()
             m_recentFileActions[i]->setVisible(true);
         }
     }
+}
+
+void GreatWindow::setStatus(int id, const QString &msg)
+{
+    if(id<0 || id>2) {
+        return;
+    }
+
+    m_statusLabels[id]->setText(msg);
 }
 
 #define PressedAny(k) (QString(k).indexOf(char(key)) != -1)
@@ -175,14 +206,14 @@ void GreatWindow::reverFullScreen()
          m_geoData = saveGeometry();
          if(m_bMainWindow) {
              ui->menuBar->hide();
-             ui->statusBar->hide();
          }
+         ui->statusBar->hide();
          showFullScreen();
     } else {
         if(m_bMainWindow) {
             ui->menuBar->show();
-            ui->statusBar->show();
         }
+        ui->statusBar->show();
         showNormal();
         restoreGeometry(m_geoData);
     }
@@ -217,7 +248,14 @@ void GreatWindow::checkShift()
 
 void GreatWindow::loaderProgress(CDecoder *loader, DecoderStatus status)
 {
+    if(m_decoder.get() == loader) {
+        setStatus(0, m_decoder->statusText());
+    }
+
     if(DS_Finished == status && m_decoder.get() == loader) {
+        QSize size = m_decoder->size();
+        setStatus(1, QString("%1x%2").arg(QString::number(size.width()),
+                                          QString::number(size.height())));
         display(loader->image());
     }
 }
@@ -227,7 +265,14 @@ void GreatWindow::openRecentFile()
     QAction *action = qobject_cast<QAction *>(sender());
     if (action) {
         QString file = action->data().toString();
-        ContentMgr.openFile(file);
+
+        if(!ContentMgr.openFile(file))
+        {
+            return;
+        }
+
+        QString next = ContentMgr.getUrl(0);
+        ViewMgr.present(next);
     }
 }
 

@@ -34,6 +34,7 @@ public:
     QImage image();
     QString url();
     DecoderStatus status();
+    QString statusText();
 
 signals:
     void statusChange(CDecoder* loader, DecoderStatus status);

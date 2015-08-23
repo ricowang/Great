@@ -11,6 +11,7 @@ class GreatWindow;
 }
 
 class CCanvas;
+class QLabel;
 
 class GreatWindow : public QMainWindow
 {
@@ -25,6 +26,7 @@ public:
     void setLoader(std::shared_ptr<CDecoder> decoder);
     void setImageActSize(const QSize& sz);
     void updateRecent();
+    void setStatus(int id, const QString& msg);
 
 public slots:
     void loaderProgress(CDecoder* loader, DecoderStatus status);
@@ -41,6 +43,7 @@ protected:
     QString m_mainUrl;
     QByteArray m_geoData;
     QAction* m_recentFileActions[5];
+    QLabel*  m_statusLabels[3];
 
 private slots:
     void on_action_Quit_triggered();
