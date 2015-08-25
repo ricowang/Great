@@ -1,7 +1,8 @@
 #include "canvas.h"
 #include <QPainter>
 
-CCanvas::CCanvas(QWidget *parent) : QWidget(parent)
+CCanvas::CCanvas(QWidget *parent) :
+    QWidget(parent), m_zoom(100), m_zoomFit(false)
 {
     QPalette Pal(palette());
     Pal.setColor(QPalette::Background, Qt::black);
@@ -15,6 +16,15 @@ void CCanvas::paintEvent(QPaintEvent * /*event*/ )
     draw(&painter);
 }
 
+void CCanvas::resizeEvent(QResizeEvent *event)
+{
+    if(m_zoomFit) {
+        setFit(true);
+    } else {
+        offset(0, 0, true);
+    }
+}
+
 void CCanvas::draw(QPainter* painter)
 {
     if(m_image.width() == 0 || m_image.height() == 0)
@@ -22,11 +32,15 @@ void CCanvas::draw(QPainter* painter)
         return;
     }
 
-    QRect picRect(0, 0, m_pic_size.width(), m_pic_size.height());
+    QRect destRect(0, 0, m_pic_size.width(), m_pic_size.height());
     QRect wndRect = painter->window();
+    QRect srcRect(0, 0, m_org_size.width(), m_org_size.height());
 
     painter->setClipRect(wndRect, Qt::IntersectClip);
-    painter->drawImage(m_offset, m_image, picRect);
+    destRect.moveTo(m_offset.x(), m_offset.y());
+    painter->drawImage(destRect, m_image, srcRect);
+    //painter->drawImage(m_offset, m_image, destRect);
+
 }
 
 void CCanvas::setImage(const QImage &img)
@@ -38,7 +52,19 @@ void CCanvas::setImage(const QImage &img)
 
 void CCanvas::setImageActSize(const QSize& sz)
 {
-    m_pic_size = sz;
+    if(m_zoomFit) {
+        double r1 = double(size().width())/sz.width();
+        double r2 = double(size().height())/sz.height();
+
+        int zoom = 100*(r1<r2?r1:r2);
+        if(m_zoom != zoom) {
+            m_zoom = zoom;
+        }
+    }
+
+    m_org_size = sz;
+    m_pic_size.setWidth(m_org_size.width()*m_zoom/100.0);
+    m_pic_size.setHeight(m_org_size.height()*m_zoom/100.0);
 }
 
 void CCanvas::offset(int x, int y, bool rp)
@@ -83,8 +109,51 @@ void CCanvas::offset(int x, int y, bool rp)
     }
 }
 
-void CCanvas::zoom(bool in)
+double CCanvas::setZoom(float f)
 {
+    if(m_zoomFit) {
+        return m_zoom/100.0;
+    }
 
+    m_zoom = f>=0?f*100:100;
+
+    if(m_org_size.width()*m_org_size.height() > 0)
+    {
+        m_pic_size.setWidth(m_org_size.width()*m_zoom/100.0);
+        m_pic_size.setHeight(m_org_size.height()*m_zoom/100.0);
+        offset(0, 0, true);
+    }
+
+    return m_zoom/100.0;
+}
+
+bool CCanvas::setFit(bool fit)
+{
+    m_zoomFit = fit;
+    if(!fit) {
+        m_zoom = 100;
+    }
+    setImageActSize(m_org_size);
+    m_offset = QPoint(0, 0);
+    offset(0, 0, true);
+}
+
+double CCanvas::zoom(bool in)
+{
+    if(m_zoomFit) {
+        return m_zoom/100.0;
+    }
+
+    m_zoom += in?10:-10;
+    m_zoom = m_zoom<=0?10:m_zoom;
+
+    if(m_org_size.width()*m_org_size.height() > 0)
+    {
+        m_pic_size.setWidth(m_org_size.width()*m_zoom/100.0);
+        m_pic_size.setHeight(m_org_size.height()*m_zoom/100.0);
+        offset(0, 0, true);
+    }
+
+    return m_zoom/100.0;
 }
 

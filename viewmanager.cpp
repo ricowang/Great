@@ -130,7 +130,11 @@ GreatWindow *CViewManager::findWindow(QSize psz)
 {
     // if any window fit all
     for(auto it=m_vWindows.begin(); it<m_vWindows.end(); it++) {
-        auto wsz = (*it)->size();
+        QSize wsz = (*it)->size();
+        float zoom = (*it)->updateZoom();
+        wsz.setWidth(wsz.width()/zoom);
+        wsz.setHeight(wsz.height()/zoom);
+
         if(psz.width() <= wsz.width() && psz.height() <= wsz.height())  {
             return (*it).get();
         }
@@ -141,6 +145,10 @@ GreatWindow *CViewManager::findWindow(QSize psz)
 
     for(auto it=m_vWindows.begin(); it<m_vWindows.end(); it++) {
         auto wsz = (*it)->size();
+        float zoom = (*it)->updateZoom();
+        wsz.setWidth(wsz.width()/zoom);
+        wsz.setHeight(wsz.height()/zoom);
+
         auto irs = QRect(QPoint(0, 0), wsz).intersected(
                     QRect(QPoint(0, 0), psz)).size();
 

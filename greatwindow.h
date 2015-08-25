@@ -27,6 +27,7 @@ public:
     void setImageActSize(const QSize& sz);
     void updateRecent();
     void setStatus(int id, const QString& msg);
+    float updateZoom();
 
 public slots:
     void loaderProgress(CDecoder* loader, DecoderStatus status);
@@ -36,6 +37,9 @@ protected:
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent * event);
     void wheelEvent(QWheelEvent * event);
+    void mousePressEvent(QMouseEvent * event);
+    void mouseReleaseEvent(QMouseEvent * event);
+    void mouseMoveEvent(QMouseEvent * event);
     void reverFullScreen();
     void checkShift();
 
@@ -43,7 +47,9 @@ protected:
     QString m_mainUrl;
     QByteArray m_geoData;
     QAction* m_recentFileActions[5];
-    QLabel*  m_statusLabels[3];
+    QLabel*  m_statusLabels[4];
+    bool m_mousePressed;
+    QPoint m_lastPos;
 
 private slots:
     void on_action_Quit_triggered();
