@@ -11,7 +11,7 @@
 #include <QPushButton>
 
 GreatWindow::GreatWindow(int monitor, bool main, QWidget *parent) :
-    QMainWindow(parent), m_monitor(monitor),
+    QMainWindow(parent), m_jumping(false), m_monitor(monitor),
     ui(new Ui::GreatWindow), m_bMainWindow(main)
 {
     ui->setupUi(this);
@@ -32,57 +32,14 @@ GreatWindow::GreatWindow(int monitor, bool main, QWidget *parent) :
         ContentMgr.loadRecentFiles();
     }
 
-    QLabel* statusLabel = new QLabel("");
-    statusLabel->setAlignment(Qt::AlignLeft);
-    statusLabel->setMinimumWidth(100);
-
-    QLabel* resolutionLabel = new QLabel("");
-    resolutionLabel->setAlignment(Qt::AlignLeft);
-    resolutionLabel->setMinimumWidth(150);
-
-    QLabel* zoomLabel = new QLabel("");
-    zoomLabel->setAlignment(Qt::AlignLeft);
-    zoomLabel->setMinimumWidth(100);
-
-    QLabel* urlLabel = new QLabel("");
-    urlLabel->setAlignment(Qt::AlignLeft);
-    urlLabel->setMinimumWidth(400);
-
-    QPushButton* zoomInButton = new QPushButton(QString(0x2295));
-    zoomInButton->setMaximumWidth(urlLabel->sizeHint().height());
-    zoomInButton->setMaximumHeight(urlLabel->sizeHint().height());
-
-    QPushButton* zoomOutButton = new QPushButton(QString(0x2296));
-    zoomOutButton->setMaximumWidth(urlLabel->sizeHint().height());
-    zoomOutButton->setMaximumHeight(urlLabel->sizeHint().height());
-
-    statusBar()->addWidget(statusLabel);
-    statusBar()->addWidget(resolutionLabel);
-    statusBar()->addWidget(zoomLabel);
-    statusBar()->addWidget(zoomInButton);
-    statusBar()->addWidget(zoomOutButton);
-    statusBar()->addWidget(urlLabel, 1);
-
-    m_statusLabels[0] = statusLabel;
-    m_statusLabels[1] = resolutionLabel;
-    m_statusLabels[2] = zoomLabel;
-    m_statusLabels[3] = urlLabel;
-
     ui->mainToolBar->hide();
     updateRecent();
 
     m_canvas = new CCanvas(ui->center);
     this->setCentralWidget(m_canvas);
-    m_jumping = false;
-
-    connect(zoomInButton, &QPushButton::clicked,
-            m_canvas, [this] {m_canvas->zoom(true); updateZoom(); });
-    connect(zoomOutButton, &QPushButton::clicked,
-            m_canvas, [this] {m_canvas->zoom(false); updateZoom(); });
+    setupStatusBar();
 
     updateZoom();
-    //connect(&m_timer, &QTimer::timeout, this, &GreatWindow::checkShift);
-    //m_timer.start(250);
 }
 
 GreatWindow::~GreatWindow()
@@ -103,16 +60,64 @@ void GreatWindow::closeEvent(QCloseEvent *event)
 
 void GreatWindow::display(const QImage &img)
 {
-    m_canvas->setImage(img);
-    m_lasts.clear();
+}
+
+
+void GreatWindow::setupStatusBar()
+{
+    QLabel* statusLabel = new QLabel("");
+    statusLabel->setAlignment(Qt::AlignLeft);
+    statusLabel->setMinimumWidth(100);
+
+    QLabel* resolutionLabel = new QLabel("");
+    resolutionLabel->setAlignment(Qt::AlignLeft);
+    resolutionLabel->setMinimumWidth(150);
+
+    QLabel* zoomLabel = new QLabel("");
+    zoomLabel->setAlignment(Qt::AlignLeft);
+    zoomLabel->setMinimumWidth(100);
+
+    QLabel* urlLabel = new QLabel("");
+    urlLabel->setAlignment(Qt::AlignLeft);
+    urlLabel->setMinimumWidth(400);
+
+    QPushButton* zoomInButton = new QPushButton(QString(0x2295));
+    zoomInButton->setMaximumWidth(urlLabel->sizeHint().height());
+    zoomInButton->setMaximumHeight(urlLabel->sizeHint().height());
+    zoomInButton->setFocusPolicy(Qt::NoFocus);
+
+    QPushButton* zoomOutButton = new QPushButton(QString(0x2296));
+    zoomOutButton->setMaximumWidth(urlLabel->sizeHint().height());
+    zoomOutButton->setMaximumHeight(urlLabel->sizeHint().height());
+    zoomOutButton->setFocusPolicy(Qt::NoFocus);
+
+    statusBar()->addWidget(statusLabel);
+    statusBar()->addWidget(resolutionLabel);
+    statusBar()->addWidget(zoomLabel);
+    statusBar()->addWidget(zoomInButton);
+    statusBar()->addWidget(zoomOutButton);
+    statusBar()->addWidget(urlLabel, 1);
+
+    m_statusLabels[0] = statusLabel;
+    m_statusLabels[1] = resolutionLabel;
+    m_statusLabels[2] = zoomLabel;
+    m_statusLabels[3] = urlLabel;
+
+    connect(zoomInButton, &QPushButton::clicked,
+            m_canvas, [this] {m_canvas->zoom(true); updateZoom(); });
+    connect(zoomOutButton, &QPushButton::clicked,
+            m_canvas, [this] {m_canvas->zoom(false); updateZoom(); });
 }
 
 void GreatWindow::setLoader(std::shared_ptr<CDecoder> decoder)
 {
     m_lasts.push_back(m_decoder);
+
+    m_decoder->disconnect();
     m_decoder = decoder;
     connect(decoder.get(), &CDecoder::statusChange,
             this, &GreatWindow::loaderProgress);
+
     setStatus(3, m_decoder->url());
     setStatus(1, "");
     setStatus(0, m_decoder->statusText());
@@ -157,6 +162,7 @@ float GreatWindow::updateZoom()
      double zoom = m_canvas->getZoom();
      QString msg = QString("%1%").arg(QString::number((int)(zoom*100)));
      setStatus(2, msg);
+     return zoom;
 }
 
 #define PressedAny(k) (QString(k).indexOf(char(key)) != -1)
@@ -165,11 +171,7 @@ void GreatWindow::keyPressEvent(QKeyEvent *event)
     // nNpPmMoO
     int key=event->key();
     if(PressedAny("nNpPmMoO ")) {
-        if(event->modifiers() & Qt::ShiftModifier)
-        {
-            m_jumping = true;
-        }
-
+        m_jumping = event->modifiers() & Qt::ShiftModifier;
         int offset = 1;
         bool group = false;
         if(QString("oOpP").indexOf(char(key)) != -1) {
@@ -183,6 +185,8 @@ void GreatWindow::keyPressEvent(QKeyEvent *event)
         m_mainUrl = ContentMgr.getUrl(offset, true, group);
         if(!m_jumping) {
             ViewMgr.present(m_mainUrl);
+        } else {
+            this->setStatus(3, m_mainUrl);
         }
 
         return;
@@ -233,11 +237,10 @@ void GreatWindow::keyPressEvent(QKeyEvent *event)
     }
 
     if(PressedAny("=+-0")) {
-        float zoom = 0.0;
         if('0' == key) {
-            zoom = m_canvas->setZoom(1);
+            m_canvas->setZoom(1);
         } else {
-            zoom = m_canvas->zoom(key!='-'?true:false);
+            m_canvas->zoom(key!='-'?true:false);
         }
 
         updateZoom();
@@ -265,9 +268,7 @@ void GreatWindow::reverFullScreen()
 
 void GreatWindow::keyReleaseEvent(QKeyEvent *event)
 {
-    int key=event->key();
-    if(m_jumping && PressedAny("nNpPmMoO") &&
-            !(event->modifiers() & Qt::ShiftModifier)) {
+    if(m_jumping && !(event->modifiers() & Qt::ShiftModifier)) {
         m_jumping = false;
         ViewMgr.present(m_mainUrl);
     }
@@ -302,7 +303,7 @@ void GreatWindow::mousePressEvent(QMouseEvent *event)
     this->setCursor(Qt::OpenHandCursor);
 }
 
-void GreatWindow::mouseReleaseEvent(QMouseEvent *event)
+void GreatWindow::mouseReleaseEvent(QMouseEvent */*event*/)
 {
     m_mousePressed = false;
     this->setCursor(Qt::ArrowCursor);
@@ -324,11 +325,6 @@ void GreatWindow::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-void GreatWindow::checkShift()
-{
-
-}
-
 void GreatWindow::loaderProgress(CDecoder *loader, DecoderStatus status)
 {
     if(m_decoder.get() == loader) {
@@ -339,7 +335,8 @@ void GreatWindow::loaderProgress(CDecoder *loader, DecoderStatus status)
         QSize size = m_decoder->size();
         setStatus(1, QString("%1x%2").arg(QString::number(size.width()),
                                           QString::number(size.height())));
-        display(loader->image());
+        m_canvas->setImage(loader->image());
+        m_lasts.clear();
     }
 }
 

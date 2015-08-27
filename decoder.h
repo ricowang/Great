@@ -51,8 +51,7 @@ protected:
     QSize           m_size;
     int             m_scanline;
     QMutex          m_lock;
-    unsigned char *         m_buffer;
-    std::shared_ptr<CDecoder> m_self;
+    unsigned char * m_buffer;
 };
 
 

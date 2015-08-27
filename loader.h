@@ -30,6 +30,7 @@ class CNetworkLoader : public QObject, public CLoader
 
 public:
     explicit CNetworkLoader(const QString& url);
+    ~CNetworkLoader();
 
     void init_source (j_decompress_ptr cinfo);
     boolean fill_input_buffer(j_decompress_ptr cinfo);

@@ -23,6 +23,7 @@ public:
 
     void closeEvent(QCloseEvent *event);
     void display(const QImage& img);
+    void setupStatusBar();
     void setLoader(std::shared_ptr<CDecoder> decoder);
     void setImageActSize(const QSize& sz);
     void updateRecent();
@@ -41,7 +42,6 @@ protected:
     void mouseReleaseEvent(QMouseEvent * event);
     void mouseMoveEvent(QMouseEvent * event);
     void reverFullScreen();
-    void checkShift();
 
     bool m_jumping;
     QString m_mainUrl;
@@ -56,12 +56,12 @@ private slots:
     void on_action_Open_triggered();
 
 private:
-    Ui::GreatWindow *ui;
     int             m_monitor;
+    CCanvas*        m_canvas;
+    Ui::GreatWindow *ui;
+
     bool            m_bMainWindow;
     QPixmap         m_pixmap;
-    CCanvas*        m_canvas;
-
 
     std::shared_ptr<CDecoder> m_decoder;
     std::vector<std::shared_ptr<CDecoder>> m_lasts;

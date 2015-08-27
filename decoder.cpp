@@ -178,7 +178,7 @@ void CDecoder::work()
         locked(lock);
         m_status = DS_Finished;
     }
-    quit();
-    emit statusChange(this, m_status);
-}
 
+    emit statusChange(this, m_status);
+    quit();
+}

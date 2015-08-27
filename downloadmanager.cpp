@@ -38,8 +38,10 @@ std::shared_ptr<CDecoder> CDownloadManager::start(const QString &url)
         loader = std::make_shared<CFileLoader>(url);
     }
 
-    m_decoders.push_back(std::make_shared<CDecoder>(loader));
-    return (*m_decoders.rbegin());
+    auto ld = std::make_shared<CDecoder>(loader);
+    m_decoders.push_back(ld);
+
+    return ld;
 }
 
 
@@ -56,14 +58,6 @@ void CDownloadManager::loaderProgress(CDecoder* loader, DecoderStatus status)
             if( (*it).get() == loader) {
                 wind->setLoader(*it);
                 wind->setImageActSize(loader->fullSize());
-                break;
-            }
-        }
-    }
-
-    if(DS_Finished == status) {
-        for(auto it=m_decoders.begin(); it!=m_decoders.end(); it++) {
-            if( (*it).get() == loader) {
                 m_decoders.erase(it);
                 break;
             }

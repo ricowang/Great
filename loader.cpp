@@ -127,7 +127,12 @@ CNetworkLoader::CNetworkLoader(const QString &url):
      connect(&m_networkManager, &QNetworkAccessManager::finished,
              this, &CNetworkLoader::onFinished);
 //     connect(m_networkReply, SIGNAL(error(QNetworkReply::NetworkError)),
-//             this, SLOT(onError(QNetworkReply::NetworkError)));
+     //             this, SLOT(onError(QNetworkReply::NetworkError)));
+}
+
+CNetworkLoader::~CNetworkLoader()
+{
+
 }
 
 void CNetworkLoader::init_source(j_decompress_ptr cinfo)

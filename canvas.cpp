@@ -16,7 +16,7 @@ void CCanvas::paintEvent(QPaintEvent * /*event*/ )
     draw(&painter);
 }
 
-void CCanvas::resizeEvent(QResizeEvent *event)
+void CCanvas::resizeEvent(QResizeEvent */*event*/)
 {
     if(m_zoomFit) {
         setFit(true);
@@ -136,6 +136,8 @@ bool CCanvas::setFit(bool fit)
     setImageActSize(m_org_size);
     m_offset = QPoint(0, 0);
     offset(0, 0, true);
+
+    return m_zoomFit;
 }
 
 double CCanvas::zoom(bool in)

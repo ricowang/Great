@@ -112,9 +112,6 @@ void CViewManager::present(const QString& url)
 
     if(decoder->status() == DS_NotStarted) {
 
-//        decoder->moveToThread(decoder.get());
-//        DownloadMgr.moveToThread(decoder.get());
-
         connect(decoder.get(), &CDecoder::statusChange,
                 &DownloadMgr, &CDownloadManager::loaderProgress,
                 Qt::QueuedConnection);
@@ -146,8 +143,8 @@ GreatWindow *CViewManager::findWindow(QSize psz)
     for(auto it=m_vWindows.begin(); it<m_vWindows.end(); it++) {
         auto wsz = (*it)->size();
         float zoom = (*it)->updateZoom();
-        wsz.setWidth(wsz.width()/zoom);
-        wsz.setHeight(wsz.height()/zoom);
+        wsz.setWidth(wsz.width()*zoom);
+        wsz.setHeight(wsz.height()*zoom);
 
         auto irs = QRect(QPoint(0, 0), wsz).intersected(
                     QRect(QPoint(0, 0), psz)).size();
